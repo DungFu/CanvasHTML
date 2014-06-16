@@ -1,0 +1,128 @@
+<html>
+<head>
+<title>GUIFramework - Frederick Meyer</title>
+<script type="text/javascript" src="./dictionaries.js"></script>
+<script type="text/javascript" src="./extra.js"></script>
+<script type="text/javascript" src="./bbox.js"></script>
+<script type="text/javascript" src="./textBox.js"></script>
+<script type="text/javascript" src="./checkBox.js"></script>
+<script type="text/javascript" src="./button.js"></script>
+<script type="text/javascript" src="./text.js"></script>
+<script type="text/javascript" src="./itemManager.js"></script>
+<script type="text/javascript">
+
+var context = null;
+var itemManager = null;
+
+window.requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame ||
+                               window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
+
+function Init() {
+    var canvas = document.getElementById("maincanvas");
+    context = canvas.getContext("2d");
+
+    itemManager = new ItemManager(characters, modifiers);
+
+    document.addEventListener('keydown', itemManager.OnKeyDown.bind(itemManager), false);
+    document.addEventListener('keyup', itemManager.OnKeyUp.bind(itemManager), false);
+    canvas.addEventListener('mousedown', itemManager.OnMouseDown.bind(itemManager), false);
+    canvas.addEventListener('mouseup', itemManager.OnMouseUp.bind(itemManager), false);
+    canvas.addEventListener('mousemove', itemManager.OnMouseMove.bind(itemManager), false);
+
+    /**
+     * Below is a little game where first you type your name in and then you have to click all of
+     * the checkboxes to win.
+     */
+
+    var name = "";
+
+    itemManager.addItem(new Text(context, 200, 20, 'Enter Your Name', function() {}, {
+        textAlign: 'center',
+        hoverFontColor: 'rgb(0,0,0)'
+    }));
+
+    itemManager.addItem(new TextBox(context, 100, 60, function(text) {name = text;}, {
+        width: 200
+    }));
+    itemManager.addItem(new Button(context, 120, 110, 'Submit', function() {
+        itemManager.wipe();
+
+        itemManager.addItem(new Text(context, 200, 20, 'Welcome '+name+'!', function() {}, {
+            textAlign: 'center',
+            hoverFontColor: 'rgb(0,0,0)'
+        }));
+        itemManager.addItem(new Text(context, 200, 45, 'Check all the boxes to win!', function() {}, {
+            textAlign: 'center',
+            hoverFontColor: 'rgb(0,0,0)'
+        }));
+
+        var numTotal = 15;
+        var numCurrent = 0;
+
+        var textItem = new Text(context, 200, 70, numCurrent+'/'+numTotal, function() {}, {
+            textAlign: 'center',
+            hoverFontColor: 'rgb(0,0,0)'
+        });
+        itemManager.addItem(textItem);
+
+        var checkBoxes = [];
+
+        for (var i = 0; i < numTotal; i++) {
+            var cBox = new CheckBox(context, 380*Math.random(), 380*Math.random(), function(state) {
+                if (state) {
+                    numCurrent++;
+                } else {
+                    numCurrent--;
+                }
+                textItem.setText(numCurrent+'/'+numTotal);
+                if (numCurrent == numTotal) {
+                    itemManager.wipe();
+                    checkBoxes = [];
+                    itemManager.addItem(new Text(context, 200, 100, 'Congratulations '+name+'! You Win!', function() {}, {
+                        textAlign: 'center',
+                        hoverFontColor: 'rgb(0,0,0)'
+                    }));
+                }
+            });
+            checkBoxes.push(cBox);
+            itemManager.addItem(cBox);
+        }
+
+        setInterval(function() {
+            for (var i = 0; i < checkBoxes.length; i++) {
+                checkBoxes[i].x += Math.round(Math.random())*4-2;
+                checkBoxes[i].y += Math.round(Math.random())*4-2;
+                if (checkBoxes[i].x < 0) {
+                    checkBoxes[i].x = 0;
+                }
+                if (checkBoxes[i].x > 380) {
+                    checkBoxes[i].x = 380;
+                }
+                if (checkBoxes[i].y < 0) {
+                    checkBoxes[i].y = 0;
+                }
+                if (checkBoxes[i].y > 380) {
+                    checkBoxes[i].y = 380;
+                }
+            }
+        }, 50);
+    }, {
+        width: 160
+    }));
+    
+}
+
+function Update() {
+    ClearRect(context, 0, 0, 400, 400);
+    itemManager.render();
+    window.requestAnimationFrame(Update);
+}
+
+window.requestAnimationFrame(Update);
+
+</script>
+</head>
+<body onload="Init();">
+<canvas id="maincanvas" width="400" height="400"></canvas>
+</body>
+</html>
